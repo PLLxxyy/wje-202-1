@@ -46,18 +46,22 @@ export default function DetailModal({ record, onClose, onDelete, onToggleFavorit
               <span className="detail-value">🌡️ {record.waterTemp}℃</span>
             </div>
           )}
-          <div className="detail-row">
-            <span className="detail-label">水质</span>
-            <span className="detail-value">
-              {WATER_QUALITY_EMOJIS[record.waterQuality] || '💧'} {record.waterQuality || '-'}
-            </span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">流速</span>
-            <span className="detail-value">
-              {FLOW_RATE_EMOJIS[record.flowRate] || '🧊'} {record.flowRate || '-'}
-            </span>
-          </div>
+          {record.waterQuality && (
+            <div className="detail-row">
+              <span className="detail-label">水质</span>
+              <span className="detail-value">
+                {WATER_QUALITY_EMOJIS[record.waterQuality] || '💧'} {record.waterQuality}
+              </span>
+            </div>
+          )}
+          {record.flowRate && (
+            <div className="detail-row">
+              <span className="detail-label">流速</span>
+              <span className="detail-value">
+                {FLOW_RATE_EMOJIS[record.flowRate] || '🧊'} {record.flowRate}
+              </span>
+            </div>
+          )}
           <div className="detail-row">
             <span className="detail-label">重量</span>
             <span className="detail-value">{formatWeight(record.weight)}</span>

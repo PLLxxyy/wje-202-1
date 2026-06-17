@@ -3,10 +3,47 @@ import { FishingRecord, SpotInfo } from './types';
 const RECORDS_KEY = 'fishing-log-records';
 const SPOTS_KEY = 'fishing-log-spots';
 
+function migrateRecord(raw: any): FishingRecord {
+  return {
+    id: raw.id,
+    date: raw.date,
+    time: raw.time || '',
+    location: raw.location || '未知钓点',
+    weather: raw.weather || '晴天',
+    waterTemp: typeof raw.waterTemp === 'number' ? raw.waterTemp : 0,
+    waterQuality: raw.waterQuality || '',
+    flowRate: raw.flowRate || '',
+    fishSpecies: raw.fishSpecies || '鲫鱼',
+    weight: typeof raw.weight === 'number' ? raw.weight : 0,
+    bait: raw.bait || '',
+    notes: raw.notes || '',
+    photoIndex: typeof raw.photoIndex === 'number' ? raw.photoIndex : Math.ceil(Math.random() * 5),
+    favorite: !!raw.favorite,
+  };
+}
+
 export function loadRecords(): FishingRecord[] {
   try {
     const raw = localStorage.getItem(RECORDS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    const migrated = parsed.map(migrateRecord);
+    let changed = false;
+    for (let i = 0; i < parsed.length; i++) {
+      if (
+        parsed[i].waterTemp === undefined ||
+        parsed[i].waterQuality === undefined ||
+        parsed[i].flowRate === undefined
+      ) {
+        changed = true;
+        break;
+      }
+    }
+    if (changed) {
+      localStorage.setItem(RECORDS_KEY, JSON.stringify(migrated));
+    }
+    return migrated;
   } catch {
     return [];
   }

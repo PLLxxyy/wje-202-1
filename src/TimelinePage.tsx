@@ -59,12 +59,16 @@ export default function TimelinePage({ records, onSelect }: Props) {
                       {record.waterTemp > 0 && (
                         <span className="tag">🌡️ {record.waterTemp}℃</span>
                       )}
-                      <span className="tag">
-                        {WATER_QUALITY_EMOJIS[record.waterQuality] || '💧'} {record.waterQuality || '-'}
-                      </span>
-                      <span className="tag">
-                        {FLOW_RATE_EMOJIS[record.flowRate] || '🧊'} {record.flowRate || '-'}
-                      </span>
+                      {record.waterQuality && (
+                        <span className="tag">
+                          {WATER_QUALITY_EMOJIS[record.waterQuality] || '💧'} {record.waterQuality}
+                        </span>
+                      )}
+                      {record.flowRate && (
+                        <span className="tag">
+                          {FLOW_RATE_EMOJIS[record.flowRate] || '🧊'} {record.flowRate}
+                        </span>
+                      )}
                       <span className="tag weight">
                         ⚖️ {formatWeight(record.weight)}
                       </span>
