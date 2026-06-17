@@ -118,11 +118,20 @@ export default function StatsPage({ records }: Props) {
 
   // Water temperature impact analysis (group by 5℃ range)
   const waterTempAnalysis = useMemo(() => {
-    const map: Record<string, { count: number; totalWeight: number; rangeStart: number }> = {};
-    records.filter(r => r.waterTemp > 0).forEach(r => {
-      const rangeStart = Math.floor(r.waterTemp / 5) * 5;
-      const range = `${rangeStart}~${rangeStart + 5}℃`;
-      if (!map[range]) map[range] = { count: 0, totalWeight: 0, rangeStart };
+    const map: Record<string, { count: number; totalWeight: number; rangeStart: number; unrecorded?: boolean }> = {};
+    records.forEach(r => {
+      let range: string;
+      let rangeStart: number;
+      let unrecorded = false;
+      if (r.waterTemp > 0) {
+        rangeStart = Math.floor(r.waterTemp / 5) * 5;
+        range = `${rangeStart}~${rangeStart + 5}℃`;
+      } else {
+        range = '未记录';
+        rangeStart = 9999;
+        unrecorded = true;
+      }
+      if (!map[range]) map[range] = { count: 0, totalWeight: 0, rangeStart, unrecorded };
       map[range].count++;
       map[range].totalWeight += r.weight;
     });
@@ -130,6 +139,7 @@ export default function StatsPage({ records }: Props) {
       .map(([range, data]) => ({
         range,
         rangeStart: data.rangeStart,
+        unrecorded: data.unrecorded,
         count: data.count,
         totalWeight: data.totalWeight,
         avgWeight: data.count > 0 ? data.totalWeight / data.count : 0,
