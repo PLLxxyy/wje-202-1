@@ -1,4 +1,4 @@
-import { FishingRecord, WEATHER_EMOJIS } from './types';
+import { FishingRecord, WEATHER_EMOJIS, WATER_QUALITY_EMOJIS, FLOW_RATE_EMOJIS } from './types';
 import { formatDate, formatWeight, getFishEmoji } from './storage';
 
 interface Props {
@@ -38,6 +38,24 @@ export default function DetailModal({ record, onClose, onDelete, onToggleFavorit
             <span className="detail-label">天气</span>
             <span className="detail-value">
               {WEATHER_EMOJIS[record.weather] || '🌤️'} {record.weather}
+            </span>
+          </div>
+          {record.waterTemp > 0 && (
+            <div className="detail-row">
+              <span className="detail-label">水温</span>
+              <span className="detail-value">🌡️ {record.waterTemp}℃</span>
+            </div>
+          )}
+          <div className="detail-row">
+            <span className="detail-label">水质</span>
+            <span className="detail-value">
+              {WATER_QUALITY_EMOJIS[record.waterQuality] || '💧'} {record.waterQuality || '-'}
+            </span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">流速</span>
+            <span className="detail-value">
+              {FLOW_RATE_EMOJIS[record.flowRate] || '🧊'} {record.flowRate || '-'}
             </span>
           </div>
           <div className="detail-row">

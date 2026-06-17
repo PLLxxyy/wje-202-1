@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { FishingRecord } from './types';
+import { FishingRecord, WEATHER_EMOJIS, WATER_QUALITY_EMOJIS, FLOW_RATE_EMOJIS } from './types';
 import { formatWeight, getMonthLabel } from './storage';
 
 interface Props {
@@ -96,6 +96,83 @@ export default function StatsPage({ records }: Props) {
     return Object.values(map)
       .sort((a, b) => b.weight - a.weight)
       .slice(0, 5);
+  }, [records]);
+
+  // Weather impact analysis
+  const weatherAnalysis = useMemo(() => {
+    const map: Record<string, { count: number; totalWeight: number }> = {};
+    records.forEach(r => {
+      if (!map[r.weather]) map[r.weather] = { count: 0, totalWeight: 0 };
+      map[r.weather].count++;
+      map[r.weather].totalWeight += r.weight;
+    });
+    return Object.entries(map)
+      .map(([weather, data]) => ({
+        weather,
+        count: data.count,
+        totalWeight: data.totalWeight,
+        avgWeight: data.count > 0 ? data.totalWeight / data.count : 0,
+      }))
+      .sort((a, b) => b.totalWeight - a.totalWeight);
+  }, [records]);
+
+  // Water temperature impact analysis (group by 5℃ range)
+  const waterTempAnalysis = useMemo(() => {
+    const map: Record<string, { count: number; totalWeight: number; rangeStart: number }> = {};
+    records.filter(r => r.waterTemp > 0).forEach(r => {
+      const rangeStart = Math.floor(r.waterTemp / 5) * 5;
+      const range = `${rangeStart}~${rangeStart + 5}℃`;
+      if (!map[range]) map[range] = { count: 0, totalWeight: 0, rangeStart };
+      map[range].count++;
+      map[range].totalWeight += r.weight;
+    });
+    return Object.entries(map)
+      .map(([range, data]) => ({
+        range,
+        rangeStart: data.rangeStart,
+        count: data.count,
+        totalWeight: data.totalWeight,
+        avgWeight: data.count > 0 ? data.totalWeight / data.count : 0,
+      }))
+      .sort((a, b) => a.rangeStart - b.rangeStart);
+  }, [records]);
+
+  // Water quality impact analysis
+  const waterQualityAnalysis = useMemo(() => {
+    const map: Record<string, { count: number; totalWeight: number }> = {};
+    records.forEach(r => {
+      const key = r.waterQuality || '未记录';
+      if (!map[key]) map[key] = { count: 0, totalWeight: 0 };
+      map[key].count++;
+      map[key].totalWeight += r.weight;
+    });
+    return Object.entries(map)
+      .map(([quality, data]) => ({
+        quality,
+        count: data.count,
+        totalWeight: data.totalWeight,
+        avgWeight: data.count > 0 ? data.totalWeight / data.count : 0,
+      }))
+      .sort((a, b) => b.totalWeight - a.totalWeight);
+  }, [records]);
+
+  // Flow rate impact analysis
+  const flowRateAnalysis = useMemo(() => {
+    const map: Record<string, { count: number; totalWeight: number }> = {};
+    records.forEach(r => {
+      const key = r.flowRate || '未记录';
+      if (!map[key]) map[key] = { count: 0, totalWeight: 0 };
+      map[key].count++;
+      map[key].totalWeight += r.weight;
+    });
+    return Object.entries(map)
+      .map(([rate, data]) => ({
+        rate,
+        count: data.count,
+        totalWeight: data.totalWeight,
+        avgWeight: data.count > 0 ? data.totalWeight / data.count : 0,
+      }))
+      .sort((a, b) => b.totalWeight - a.totalWeight);
   }, [records]);
 
   if (records.length === 0) {
@@ -227,6 +304,176 @@ export default function StatsPage({ records }: Props) {
             <div className="leaderboard-weight">{formatWeight(r.weight)}</div>
           </div>
         ))}
+      </div>
+
+      {/* Environment Impact: Weather */}
+      <div className="stat-card">
+        <h3>🌤️ 天气影响分析</h3>
+        {weatherAnalysis.length > 0 ? (
+          <>
+            {weatherAnalysis.map((w, i) => {
+              const maxWeight = Math.max(...weatherAnalysis.map(x => x.totalWeight), 1);
+              return (
+                <div key={w.weather} style={{ marginBottom: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span>
+                      {WEATHER_EMOJIS[w.weather] || '🌤️'} {w.weather}
+                    </span>
+                    <span style={{ color: '#666', fontSize: 13 }}>
+                      {w.count}次 · 总计{formatWeight(w.totalWeight)} · 均{formatWeight(Math.round(w.avgWeight))}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      height: 8,
+                      borderRadius: 4,
+                      background: '#e8f5e9',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${(w.totalWeight / maxWeight) * 100}%`,
+                        background: i === 0 ? '#2d6a4f' : '#74c69d',
+                        borderRadius: 4,
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        ) : (
+          <p style={{ color: '#999', fontSize: 14 }}>暂无数据</p>
+        )}
+      </div>
+
+      {/* Environment Impact: Water Temperature */}
+      <div className="stat-card">
+        <h3>🌡️ 水温影响分析</h3>
+        {waterTempAnalysis.length > 0 ? (
+          <>
+            {waterTempAnalysis.map((t, i) => {
+              const maxWeight = Math.max(...waterTempAnalysis.map(x => x.totalWeight), 1);
+              return (
+                <div key={t.range} style={{ marginBottom: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span>{t.range}</span>
+                    <span style={{ color: '#666', fontSize: 13 }}>
+                      {t.count}次 · 总计{formatWeight(t.totalWeight)} · 均{formatWeight(Math.round(t.avgWeight))}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      height: 8,
+                      borderRadius: 4,
+                      background: '#e3f2fd',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${(t.totalWeight / maxWeight) * 100}%`,
+                        background: i === waterTempAnalysis.length - 1 ? '#1976d2' : '#64b5f6',
+                        borderRadius: 4,
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        ) : (
+          <p style={{ color: '#999', fontSize: 14 }}>暂无水温数据，请在记录时填写水温</p>
+        )}
+      </div>
+
+      {/* Environment Impact: Water Quality */}
+      <div className="stat-card">
+        <h3>💧 水质影响分析</h3>
+        {waterQualityAnalysis.length > 0 ? (
+          <>
+            {waterQualityAnalysis.map((q, i) => {
+              const maxWeight = Math.max(...waterQualityAnalysis.map(x => x.totalWeight), 1);
+              return (
+                <div key={q.quality} style={{ marginBottom: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span>
+                      {WATER_QUALITY_EMOJIS[q.quality] || '💧'} {q.quality}
+                    </span>
+                    <span style={{ color: '#666', fontSize: 13 }}>
+                      {q.count}次 · 总计{formatWeight(q.totalWeight)} · 均{formatWeight(Math.round(q.avgWeight))}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      height: 8,
+                      borderRadius: 4,
+                      background: '#f1f8e9',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${(q.totalWeight / maxWeight) * 100}%`,
+                        background: i === 0 ? '#558b2f' : '#9ccc65',
+                        borderRadius: 4,
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        ) : (
+          <p style={{ color: '#999', fontSize: 14 }}>暂无数据</p>
+        )}
+      </div>
+
+      {/* Environment Impact: Flow Rate */}
+      <div className="stat-card">
+        <h3>🌊 流速影响分析</h3>
+        {flowRateAnalysis.length > 0 ? (
+          <>
+            {flowRateAnalysis.map((f, i) => {
+              const maxWeight = Math.max(...flowRateAnalysis.map(x => x.totalWeight), 1);
+              return (
+                <div key={f.rate} style={{ marginBottom: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span>
+                      {FLOW_RATE_EMOJIS[f.rate] || '🧊'} {f.rate}
+                    </span>
+                    <span style={{ color: '#666', fontSize: 13 }}>
+                      {f.count}次 · 总计{formatWeight(f.totalWeight)} · 均{formatWeight(Math.round(f.avgWeight))}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      height: 8,
+                      borderRadius: 4,
+                      background: '#e0f7fa',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${(f.totalWeight / maxWeight) * 100}%`,
+                        background: i === 0 ? '#00695c' : '#4db6ac',
+                        borderRadius: 4,
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        ) : (
+          <p style={{ color: '#999', fontSize: 14 }}>暂无数据</p>
+        )}
       </div>
     </>
   );

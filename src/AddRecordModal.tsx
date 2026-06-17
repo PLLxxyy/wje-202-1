@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FishingRecord, WEATHER_OPTIONS, BAIT_OPTIONS } from './types';
+import { FishingRecord, WEATHER_OPTIONS, WATER_QUALITY_OPTIONS, FLOW_RATE_OPTIONS, BAIT_OPTIONS } from './types';
 import { generateId } from './storage';
 
 interface Props {
@@ -18,6 +18,9 @@ export default function AddRecordModal({ onAdd, onClose, existingLocations }: Pr
   const [location, setLocation] = useState('');
   const [customLocation, setCustomLocation] = useState('');
   const [weather, setWeather] = useState('晴天');
+  const [waterTemp, setWaterTemp] = useState('');
+  const [waterQuality, setWaterQuality] = useState('清澈');
+  const [flowRate, setFlowRate] = useState('静止');
   const [fishSpecies, setFishSpecies] = useState('鲫鱼');
   const [customFish, setCustomFish] = useState('');
   const [weight, setWeight] = useState('');
@@ -30,6 +33,7 @@ export default function AddRecordModal({ onAdd, onClose, existingLocations }: Pr
     const finalLocation = customLocation || location || '未知钓点';
     const finalFish = customFish || fishSpecies;
     const weightNum = parseFloat(weight) || 0;
+    const waterTempNum = parseFloat(waterTemp) || 0;
 
     onAdd({
       id: generateId(),
@@ -37,6 +41,9 @@ export default function AddRecordModal({ onAdd, onClose, existingLocations }: Pr
       time,
       location: finalLocation,
       weather,
+      waterTemp: waterTempNum,
+      waterQuality,
+      flowRate,
       fishSpecies: finalFish,
       weight: weightNum,
       bait,
@@ -111,6 +118,46 @@ export default function AddRecordModal({ onAdd, onClose, existingLocations }: Pr
             >
               {WEATHER_OPTIONS.map(w => (
                 <option key={w} value={w}>{w}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Environment Info */}
+          <div className="form-section-title">水环境信息</div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">水温 (℃)</label>
+              <input
+                type="number"
+                step="0.1"
+                className="form-input"
+                placeholder="如 22.5"
+                value={waterTemp}
+                onChange={e => setWaterTemp(e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">水质</label>
+              <select
+                className="form-select"
+                value={waterQuality}
+                onChange={e => setWaterQuality(e.target.value)}
+              >
+                {WATER_QUALITY_OPTIONS.map(q => (
+                  <option key={q} value={q}>{q}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">流速</label>
+            <select
+              className="form-select"
+              value={flowRate}
+              onChange={e => setFlowRate(e.target.value)}
+            >
+              {FLOW_RATE_OPTIONS.map(f => (
+                <option key={f} value={f}>{f}</option>
               ))}
             </select>
           </div>

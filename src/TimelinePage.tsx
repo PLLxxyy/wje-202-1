@@ -1,6 +1,6 @@
 import { FishingRecord } from './types';
 import { formatDate, formatWeight, getFishEmoji } from './storage';
-import { WEATHER_EMOJIS } from './types';
+import { WEATHER_EMOJIS, WATER_QUALITY_EMOJIS, FLOW_RATE_EMOJIS } from './types';
 
 interface Props {
   records: FishingRecord[];
@@ -55,6 +55,15 @@ export default function TimelinePage({ records, onSelect }: Props) {
                     <div className="timeline-tags">
                       <span className="tag weather">
                         {WEATHER_EMOJIS[record.weather] || '🌤️'} {record.weather}
+                      </span>
+                      {record.waterTemp > 0 && (
+                        <span className="tag">🌡️ {record.waterTemp}℃</span>
+                      )}
+                      <span className="tag">
+                        {WATER_QUALITY_EMOJIS[record.waterQuality] || '💧'} {record.waterQuality || '-'}
+                      </span>
+                      <span className="tag">
+                        {FLOW_RATE_EMOJIS[record.flowRate] || '🧊'} {record.flowRate || '-'}
                       </span>
                       <span className="tag weight">
                         ⚖️ {formatWeight(record.weight)}
